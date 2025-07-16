@@ -117,7 +117,7 @@ export async function generateDocxReport(data: ReportData): Promise<Buffer> {
         }),
       ],
       alignment: AlignmentType.CENTER,
-      spacing: { after: 300 },
+      spacing: { after: 200 },
     })
   );
 
@@ -125,15 +125,32 @@ export async function generateDocxReport(data: ReportData): Promise<Buffer> {
   // Removido o parágrafo Coordenadas Consultadas
 
   // Tabela 2 colunas x 4 linhas após coordenadas
+  const fundiarioLayersWithIntersection = queryResults
+    .filter(result => result.hasIntersection && result.layerName.startsWith("Fundiário"))
+    .map(result => result.layerName);
+
   docChildren.push(
     new Table({
       rows: [
         new TableRow({
           children: [
             new TableCell({
-              children: [new Paragraph("Linha 1, Coluna 1")],
+              children: [
+                new Paragraph({
+                  children: [
+                    new TextRun({
+                      text: "Insira aqui a imagem principal",
+                      italics: true,
+                      color: "7F7F7F",
+                      size: 20,
+                    }),
+                  ],
+                  alignment: AlignmentType.CENTER,
+                  spacing: { after: 400, before: 200 },
+                }),
+              ],
               verticalAlign: VerticalAlign.CENTER,
-              rowSpan: 3, // Mescla verticalmente esta célula nas 3 primeiras linhas
+              rowSpan: 3,
             }),
             new TableCell({ children: [new Paragraph("Linha 1, Coluna 2")], verticalAlign: VerticalAlign.CENTER }),
           ],
@@ -184,12 +201,12 @@ export async function generateDocxReport(data: ReportData): Promise<Buffer> {
       width: { size: 100, type: WidthType.PERCENTAGE },
       columnWidths: [5000, 5000],
       borders: {
-        top: { style: BorderStyle.SINGLE, size: 1, color: "BFBFBF" },
-        bottom: { style: BorderStyle.SINGLE, size: 1, color: "BFBFBF" },
-        left: { style: BorderStyle.SINGLE, size: 1, color: "BFBFBF" },
-        right: { style: BorderStyle.SINGLE, size: 1, color: "BFBFBF" },
-        insideHorizontal: { style: BorderStyle.SINGLE, size: 1, color: "BFBFBF" },
-        insideVertical: { style: BorderStyle.SINGLE, size: 1, color: "BFBFBF" },
+        top: { style: BorderStyle.SINGLE, size: 1, color: "000000" },
+        bottom: { style: BorderStyle.SINGLE, size: 1, color: "000000" },
+        left: { style: BorderStyle.SINGLE, size: 1, color: "000000" },
+        right: { style: BorderStyle.SINGLE, size: 1, color: "000000" },
+        insideHorizontal: { style: BorderStyle.SINGLE, size: 1, color: "000000" },
+        insideVertical: { style: BorderStyle.SINGLE, size: 1, color: "000000" },
       },
     })
   );
@@ -197,7 +214,7 @@ export async function generateDocxReport(data: ReportData): Promise<Buffer> {
   // Imagem Principal (placeholder) - MOVIMENTADO PARA ANTES DO RESUMO DE INTERFERÊNCIAS
   // E DEPOIS DAS COORDENADAS
   // Sempre adiciona o placeholder para inserção manual da imagem.
-  docChildren.push(createPlaceholderImageParagraph());
+  // docChildren.push(createPlaceholderImageParagraph());
 
   // 4. Relatório Descritivo
   // Esta seção agora vem após as informações iniciais e o placeholder da imagem principal.
@@ -230,11 +247,11 @@ export async function generateDocxReport(data: ReportData): Promise<Buffer> {
     })
   );
 
-  const fundiarioLayersWithIntersection = queryResults
+  const fundiarioLayersWithIntersection2 = queryResults
     .filter(result => result.hasIntersection && result.layerName.startsWith("Fundiário"))
     .map(result => result.layerName);
 
-  if (fundiarioLayersWithIntersection.length > 0) {
+  if (fundiarioLayersWithIntersection2.length > 0) {
     descriptiveReportSection.push(
       new Paragraph({
         children: [
@@ -243,7 +260,7 @@ export async function generateDocxReport(data: ReportData): Promise<Buffer> {
         spacing: { after: 50 },
       })
     );
-    fundiarioLayersWithIntersection.forEach(layerName => {
+    fundiarioLayersWithIntersection2.forEach(layerName => {
       descriptiveReportSection.push(
         new Paragraph({
           text: layerName,
@@ -412,7 +429,7 @@ export async function generateDocxReport(data: ReportData): Promise<Buffer> {
                   new TextRun({ text: "Status: ", bold: true }),
                   new TextRun(String(feature.error)),
                 ],
-                spacing: { after: 100 }, // Espaçamento após a mensagem de status
+                spacing: { after: 100 } // Espaçamento após a mensagem de status
               })
             );
           } else {
@@ -469,12 +486,12 @@ export async function generateDocxReport(data: ReportData): Promise<Buffer> {
                   width: { size: 100, type: WidthType.PERCENTAGE },
                   columnWidths: [3000, 7000], // Proporção 30/70
                   borders: {
-                    top: { style: BorderStyle.SINGLE, size: 1, color: "BFBFBF" },
-                    bottom: { style: BorderStyle.SINGLE, size: 1, color: "BFBFBF" },
-                    left: { style: BorderStyle.SINGLE, size: 1, color: "BFBFBF" },
-                    right: { style: BorderStyle.SINGLE, size: 1, color: "BFBFBF" },
-                    insideHorizontal: { style: BorderStyle.SINGLE, size: 1, color: "BFBFBF" },
-                    insideVertical: { style: BorderStyle.SINGLE, size: 1, color: "BFBFBF" },
+                    top: { style: BorderStyle.SINGLE, size: 1, color: "000000" },
+                    bottom: { style: BorderStyle.SINGLE, size: 1, color: "000000" },
+                    left: { style: BorderStyle.SINGLE, size: 1, color: "000000" },
+                    right: { style: BorderStyle.SINGLE, size: 1, color: "000000" },
+                    insideHorizontal: { style: BorderStyle.SINGLE, size: 1, color: "000000" },
+                    insideVertical: { style: BorderStyle.SINGLE, size: 1, color: "000000" },
                   },
                 })
               );
@@ -629,11 +646,11 @@ export async function generateDocxReport(data: ReportData): Promise<Buffer> {
       // Adiciona uma linha horizontal simples acima do texto do rodapé
       new Paragraph({
         border: { top: { color: "auto", space: 1, style: BorderStyle.SINGLE, size: 6 } },
-        spacing: { before: 50 } // Espaço antes da linha
+        spacing: { before: 0, after: 0 } // Remove espaço antes e depois da linha
       }),
       new Paragraph({
-        children: [new TextRun({ text: "Fontes Consultadas:", bold: true, size: 10 })], // 5pt = 10 half-points
-        spacing: { after: 50, before: 50 } // Pequeno espaço após o título
+        children: [new TextRun({ text: "Fontes Consultadas:", bold: true, size: 10 })],
+        spacing: { after: 1, before: 0 } // Remove espaço antes do título
       }),
       new Paragraph({
         children: [new TextRun({ text: "Urbanístico - Geoportal DF: Infraestrutura de Dados Espaciais do Distrito Federal (IDE/DF), https://www.ide.df.gov.br/geoportal", size: 10 })],
@@ -654,11 +671,11 @@ export async function generateDocxReport(data: ReportData): Promise<Buffer> {
             text: `Relatório de Consulta${analysisDateTime ? ` - ${analysisDateTime}` : ''}`,
             italics: true,
             color: "7F7F7F",
-            size: 12,
+            size: 14,
           }),
         ],
         alignment: AlignmentType.CENTER,
-        spacing: { before: 200 }
+        spacing: { before: 50 }
       }),
     ],
   });
