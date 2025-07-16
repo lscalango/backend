@@ -1,3 +1,5 @@
+import * as fs from 'fs';
+import * as path from 'path';
 import {
   Document,
   Packer,
@@ -18,6 +20,7 @@ import {
   FootnoteReferenceRun, // Adicionado para notas de rodapé
   ShadingType, // Adicionado para sombreamento de células
 } from 'docx'; 
+import { PageOrientation } from 'docx';
 import { 
   HorizontalPositionAlign, HorizontalPositionRelativeFrom, 
   VerticalPositionAlign, VerticalPositionRelativeFrom 
@@ -42,6 +45,9 @@ export interface ReportData {
   mapImageDataUrl?: string | null; // Tornar opcional, pois o frontend não envia mais para inserção automática
   docxInterferenceTableRows?: string[][]; // Dados para a tabela de resumo de interferências
   analysisDateTime?: string; // Data e hora da análise (o frontend envia, e também está em docxInterferenceTableRows)
+  numeroUGM?: string;
+  processoSEI?: string;
+  endereco?: string;
 }
 
 // Função auxiliar para criar o parágrafo placeholder da imagem (para reutilização)
@@ -80,52 +86,114 @@ function createLayerImagePlaceholderParagraph(): Paragraph {
   });
 }
 
+const footnoteIdCoordinates = 1; // ID único para nossa nota de rodapé de exemplo
 
 export async function generateDocxReport(data: ReportData): Promise<Buffer> {
+  const logoBuffer = fs.readFileSync(path.resolve(__dirname, 'assets', 'logo.png'));
+
   const {
     coordinates,
     administrativeRegionName,
     queryResults,
     docxInterferenceTableRows,
     analysisDateTime, // Usaremos para o cabeçalho
-    
+    numeroUGM,
+    processoSEI,
+    endereco,
   } = data;
   const docChildren: (Paragraph | Table)[] = [];
 
   // 1. Nome do Relatório
   docChildren.push(
     new Paragraph({
-      text: "Relatório UGM Nº XXX/20XX", // Nome do relatório
-      heading: HeadingLevel.TITLE,
+      children: [
+        new TextRun({
+          text: `RELATÓRIO DE CARACTERIZAÇÃO DE ÁREA DE FISCALIZAÇÃO Nº ${
+            numeroUGM || 'XXX/XXXX'
+          }`, // Nome do relatório
+          bold: true,
+          size: 28, // 14pt (28 half-points)
+          font: 'Times New Roman',
+        }),
+      ],
       alignment: AlignmentType.CENTER,
       spacing: { after: 300 },
     })
   );
 
-  // 2. Região Administrativa
+  // Removido o parágrafo Região Administrativa
+  // Removido o parágrafo Coordenadas Consultadas
+
+  // Tabela 2 colunas x 4 linhas após coordenadas
   docChildren.push(
-    new Paragraph({
-      children: [
-        new TextRun({ text: "Região Administrativa: ", bold: true }),
-        new TextRun(administrativeRegionName || 'Não identificada'),
+    new Table({
+      rows: [
+        new TableRow({
+          children: [
+            new TableCell({
+              children: [new Paragraph("Linha 1, Coluna 1")],
+              verticalAlign: VerticalAlign.CENTER,
+              rowSpan: 3, // Mescla verticalmente esta célula nas 3 primeiras linhas
+            }),
+            new TableCell({ children: [new Paragraph("Linha 1, Coluna 2")], verticalAlign: VerticalAlign.CENTER }),
+          ],
+        }),
+        new TableRow({
+          children: [
+            // Célula mesclada, então só adiciona a coluna 2
+            new TableCell({ children: [new Paragraph("Linha 2, Coluna 2")], verticalAlign: VerticalAlign.CENTER }),
+          ],
+        }),
+        new TableRow({
+          children: [
+            // Célula mesclada, então só adiciona a coluna 2
+            new TableCell({ children: [new Paragraph("Linha 3, Coluna 2")], verticalAlign: VerticalAlign.CENTER }),
+          ],
+        }),
+        new TableRow({
+          children: [
+            new TableCell({
+              children: [
+                new Paragraph({
+                  children: [
+                    new TextRun({ text: "Região Administrativa: ", bold: true }),
+                    new TextRun(administrativeRegionName || 'Não identificada'),
+                  ],
+                  spacing: { after: 100 }
+                }),
+                new Paragraph({
+                  children: [
+                    new TextRun({ text: "Coordenadas Consultadas: ", bold: true }),
+                    new TextRun(`${coordinates.lat}, ${coordinates.lon}`),
+                  ],
+                  spacing: { after: 100 }
+                }),
+                new Paragraph({
+                  children: [
+                    new TextRun({ text: "Fonte da Imagem:", bold: true }),
+                  ],
+                  spacing: { after: 100 }
+                }),
+              ],
+              verticalAlign: VerticalAlign.CENTER
+            }),
+            new TableCell({ children: [new Paragraph("Linha 4, Coluna 2")], verticalAlign: VerticalAlign.CENTER }),
+          ],
+        }),
       ],
-      spacing: { after: 100 }, // Ajustado o espaçamento
+      width: { size: 100, type: WidthType.PERCENTAGE },
+      columnWidths: [5000, 5000],
+      borders: {
+        top: { style: BorderStyle.SINGLE, size: 1, color: "BFBFBF" },
+        bottom: { style: BorderStyle.SINGLE, size: 1, color: "BFBFBF" },
+        left: { style: BorderStyle.SINGLE, size: 1, color: "BFBFBF" },
+        right: { style: BorderStyle.SINGLE, size: 1, color: "BFBFBF" },
+        insideHorizontal: { style: BorderStyle.SINGLE, size: 1, color: "BFBFBF" },
+        insideVertical: { style: BorderStyle.SINGLE, size: 1, color: "BFBFBF" },
+      },
     })
   );
 
-  const footnoteIdCoordinates = 1; // ID único para nossa nota de rodapé de exemplo
-
-  // 3. Coordenadas
-  docChildren.push(
-      new Paragraph({
-        children: [
-        new TextRun({ text: "Coordenadas Consultadas (WGS84): ", bold: true }),
-        new TextRun(`${coordinates.lat}, ${coordinates.lon}`),
-        new FootnoteReferenceRun(footnoteIdCoordinates), // Adiciona a referência da nota de rodapé aqui
-        ],
-      spacing: { after: 200 }, // Ajustado o espaçamento
-    })
-  );
   // Imagem Principal (placeholder) - MOVIMENTADO PARA ANTES DO RESUMO DE INTERFERÊNCIAS
   // E DEPOIS DAS COORDENADAS
   // Sempre adiciona o placeholder para inserção manual da imagem.
@@ -292,10 +360,18 @@ export async function generateDocxReport(data: ReportData): Promise<Buffer> {
   }
   descriptiveReportSection.push(new Paragraph({ children: [new TextRun({ text: "[Inserir aqui análise complementar sobre os aspectos ambientais...]", italics: true, color: "7F7F7F" })], spacing: { after: 150, before: 50 } }));
 
-  // Subseção: Conclusão e Recomendações
-  descriptiveReportSection.push(new Paragraph({ children: [new TextRun({ text: "Conclusão e Recomendações:", bold: true })], spacing: { after: 100, before: 150 } }));
-  descriptiveReportSection.push(new Paragraph({ children: [new TextRun({ text: "[Inserir aqui conclusões e recomendações finais...]", italics: true, color: "7F7F7F" })], spacing: { after: 150 } }));
+  // Subseção: Observações (anteriormente Conclusão e Recomendações)
+  descriptiveReportSection.push(new Paragraph({ children: [new TextRun({ text: "Observações:", bold: true })], spacing: { after: 100, before: 150 } }));
+  descriptiveReportSection.push(new Paragraph({ children: [new TextRun({ text: "[Inserir aqui as observações...]", italics: true, color: "7F7F7F" })], spacing: { after: 150 } }));
 
+  // Adiciona a nova seção "SÉRIE HISTÓRICA"
+  descriptiveReportSection.push(
+    new Paragraph({
+      children: [new TextRun({ text: "SÉRIE HISTÓRICA – Levantamento com imagens históricas do Google Earth Pro – 2017/2025", bold: true })],
+      spacing: { after: 100, before: 150 },
+    })
+  );
+  
   // Adicionamos a seção descritiva:
   docChildren.push(...descriptiveReportSection);
 
@@ -317,14 +393,8 @@ export async function generateDocxReport(data: ReportData): Promise<Buffer> {
         text: `Camada: ${result.layerName}`,
         heading: HeadingLevel.HEADING_2,
         spacing: { before: 400, after: 150 }, // Espaçamento antes do nome da camada
+        pageBreakBefore: processedIntersectionCount > 0 ? true : undefined,
       };
-
-      // Adicionar quebra de página antes desta camada se não for a primeira camada com interseção
-      // A seção "Detalhes por Camada Consultada" já garante que a primeira camada com interseção
-      // comece em uma nova página.
-      if (processedIntersectionCount > 0) {
-        layerNameParagraphOptions.pageBreakBefore = true;
-      }
 
       docChildren.push(
         new Paragraph(layerNameParagraphOptions)
@@ -420,6 +490,40 @@ export async function generateDocxReport(data: ReportData): Promise<Buffer> {
     }
   });
 
+  // Adiciona o texto final do relatório
+  docChildren.push(
+    new Paragraph({
+      children: [
+        new TextRun({
+          text: "Ressaltamos que a análise se baseou nas consultas aos Portais Oficiais do Distrito Federal (Geoportal, ONDA, SISDIA e TERRAGEO) e em imagens de satélite. Estas nem sempre permitem uma interpretação completamente precisa, tampouco em tempo real, portanto faz-se necessário correlacionar a informação com dados levantados em campo, visando a assertividade na continuidade do atendimento à demanda.",
+        }),
+      ],
+      spacing: { before: 400, after: 200 },
+    })
+  );
+
+  docChildren.push(
+    new Paragraph({
+      children: [new TextRun("Brasília, 02/06/2025")],
+      alignment: AlignmentType.CENTER,
+      spacing: { before: 400, after: 400 },
+    })
+  );
+
+  docChildren.push(
+    new Paragraph({
+      children: [new TextRun("Luciano dos Santos")],
+      alignment: AlignmentType.CENTER,
+    })
+  );
+
+  docChildren.push(
+    new Paragraph({
+      children: [new TextRun("Analista de Planejamento Urbano e Infraestrutura - Assessor/UGMON - Matrícula 221.540-3")],
+      alignment: AlignmentType.CENTER,
+    })
+  );
+
   // A nota de rodapé das fontes foi movida para o rodapé da página (Footer)
   // Definição do Cabeçalho Padrão
   const headerCellStyle = {
@@ -435,7 +539,8 @@ export async function generateDocxReport(data: ReportData): Promise<Buffer> {
     // Usaremos uma tabela para alinhar o ícone à esquerda e os textos à direita
     children: [
       new Table({
-        columnWidths: [1500, 8000], // Ajuste conforme o tamanho do seu ícone e texto
+        width: { size: 100, type: WidthType.PERCENTAGE }, // Ocupa a largura total da página
+        columnWidths: [1815, 12585], // Proporção ajustada para paisagem (3.2cm para logo, resto para texto)
         borders: { // Sem bordas para a tabela do cabeçalho
           top: { style: BorderStyle.NONE, size: 0, color: "auto" },
           bottom: { style: BorderStyle.NONE, size: 0, color: "auto" },
@@ -446,49 +551,64 @@ export async function generateDocxReport(data: ReportData): Promise<Buffer> {
         },
         rows: [
           new TableRow({
+            height: { value: 1500, rule: HeightRule.ATLEAST }, // Altura mínima para acomodar o logo
             children: [
-              new TableCell({ 
-                ...headerCellStyle, // Aplicar estilo de fundo e alinhamento
+              new TableCell({
+                ...headerCellStyle,
                 children: [
                   new Paragraph({
                     children: [
-                      // Placeholder para o ícone. Veja a nota abaixo sobre como adicionar uma imagem real.
-                      new TextRun({ text: "[ÍCONE AQUI]", italics: true, color: "FFFFFF", size: 18 }), // Texto branco
+                      new ImageRun({
+                        data: logoBuffer,
+                        transformation: {
+                          width: 121,  // 3.20cm
+                          height: 56,   // 1.49cm
+                        },
+                        type: 'png', // Adicionado para especificar o tipo da imagem
+                      }),
                     ],
-                    alignment: AlignmentType.LEFT,
+                    alignment: AlignmentType.CENTER,
                   }),
                 ],
               }),
               new TableCell({ 
-                ...headerCellStyle, // Aplicar estilo de fundo e alinhamento
+                ...headerCellStyle,
                 children: [
                   new Paragraph({ 
                     children: [
-                      new TextRun({ text: "SECRETARIA DE ESTADO DA PROTEÇÃO URBANÍSTICA DO DISTRITO FEDERAL - DF LEGAL", bold: true, color: "FFFFFF", size: 20 }) // Texto branco, fonte 11pt
+                      new TextRun({ text: "SECRETARIA DE ESTADO DA PROTEÇÃO URBANÍSTICA DO DISTRITO FEDERAL - DF LEGAL", bold: true, color: "FFFFFF", size: 20 })
                     ],
-                    style: "Heading3", 
                     alignment: AlignmentType.RIGHT, 
-                    spacing: { after: 15 } // Espaçamento reduzido
+                    spacing: { after: 15 }
                   }),
                   new Paragraph({ 
                     children: [
-                      new TextRun({ text: "UNIDADE DE GEOPROCESSAMENTO E MONITORAMENTO - UGMON", color: "FFFFFF", size: 18 }) // Texto branco, fonte 10pt
+                      new TextRun({ text: "UNIDADE DE GEOPROCESSAMENTO E MONITORAMENTO - UGMON", color: "FFFFFF", size: 18 })
                     ],
-                    style: "IntenseQuote", 
                     alignment: AlignmentType.RIGHT, 
-                    spacing: { after: 15 } // Espaçamento reduzido
+                    spacing: { after: 15 }
                   }),
-                  new Paragraph({
-                    children: [
-                      new TextRun({
-                        text: `Relatório de Consulta ${analysisDateTime ? `- ${analysisDateTime}` : ''}`,
-                        italics: true,
-                        color: "FFFFFF", // Texto branco
-                        size: 18, // 9pt
-                      }),
-                    ],
-                    alignment: AlignmentType.RIGHT,
-                  }),
+                  // Adiciona Processo SEI se fornecido
+                  ...(processoSEI ? [
+                    new Paragraph({
+                      children: [
+                        new TextRun({ text: `Processo SEI: ${processoSEI}`, color: "FFFFFF", size: 18 })
+                      ],
+                      alignment: AlignmentType.RIGHT,
+                      spacing: { after: 10 }
+                    })
+                  ] : []),
+                  // Adiciona Endereço se fornecido
+                  ...(endereco ? [
+                    new Paragraph({
+                      children: [
+                        new TextRun({ text: `Endereço: ${endereco}`, color: "FFFFFF", size: 18 })
+                      ],
+                      alignment: AlignmentType.RIGHT,
+                      spacing: { after: 10 }
+                    })
+                  ] : []),
+                  // Removido o parágrafo "Relatório de Consulta" do cabeçalho
                 ],
               }),
             ],
@@ -527,6 +647,19 @@ export async function generateDocxReport(data: ReportData): Promise<Buffer> {
         children: [new TextRun({ text: "Fundiário - Terrageo: Portal de informações e mapas da Terracap, https://terrageo2.terracap.df.gov.br/", size: 10 })],
         indent: { left: 200 },
       }),
+      // Adiciona o parágrafo "Relatório de Consulta" com data/hora ao rodapé, alinhado à direita
+      new Paragraph({
+        children: [
+          new TextRun({
+            text: `Relatório de Consulta${analysisDateTime ? ` - ${analysisDateTime}` : ''}`,
+            italics: true,
+            color: "7F7F7F",
+            size: 12,
+          }),
+        ],
+        alignment: AlignmentType.CENTER,
+        spacing: { before: 200 }
+      }),
     ],
   });
 
@@ -551,6 +684,9 @@ export async function generateDocxReport(data: ReportData): Promise<Buffer> {
       properties: {
         page: {
           margin: { top: 720, right: 720, bottom: 720, left: 720 }, // Margens de ~0.5 polegada
+          size: {
+            orientation: PageOrientation.LANDSCAPE,
+          },
         },
       },
       children: docChildren, // Agora contém todos os elementos
