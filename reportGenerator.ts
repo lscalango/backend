@@ -152,19 +152,47 @@ export async function generateDocxReport(data: ReportData): Promise<Buffer> {
               verticalAlign: VerticalAlign.CENTER,
               rowSpan: 3,
             }),
-            new TableCell({ children: [new Paragraph("Linha 1, Coluna 2")], verticalAlign: VerticalAlign.CENTER }),
+            new TableCell({ children: [new Paragraph(fundiarioLayersWithIntersection.join('\n') || 'Nenhuma')], verticalAlign: VerticalAlign.CENTER }),
           ],
         }),
         new TableRow({
           children: [
             // Célula mesclada, então só adiciona a coluna 2
-            new TableCell({ children: [new Paragraph("Linha 2, Coluna 2")], verticalAlign: VerticalAlign.CENTER }),
+            new TableCell({
+              children: [
+                new Paragraph({
+                  children: [
+                    new TextRun({
+                      text: queryResults
+                        .filter(result => result.hasIntersection && result.layerName.startsWith("Urbanístico"))
+                        .map(result => result.layerName)
+                        .join(', ') || 'Nenhuma',
+                    }),
+                  ],
+                }),
+              ],
+              verticalAlign: VerticalAlign.CENTER,
+            }),
           ],
         }),
         new TableRow({
           children: [
             // Célula mesclada, então só adiciona a coluna 2
-            new TableCell({ children: [new Paragraph("Linha 3, Coluna 2")], verticalAlign: VerticalAlign.CENTER }),
+            new TableCell({
+              children: [
+                new Paragraph({
+                  children: [
+                    new TextRun({
+                      text: queryResults
+                        .filter(result => result.hasIntersection && result.layerName.startsWith("Ambiental"))
+                        .map(result => result.layerName)
+                        .join(', ') || 'Nenhuma',
+                    }),
+                  ],
+                }),
+              ],
+              verticalAlign: VerticalAlign.CENTER,
+            }),
           ],
         }),
         new TableRow({
@@ -194,12 +222,12 @@ export async function generateDocxReport(data: ReportData): Promise<Buffer> {
               ],
               verticalAlign: VerticalAlign.CENTER
             }),
-            new TableCell({ children: [new Paragraph("Linha 4, Coluna 2")], verticalAlign: VerticalAlign.CENTER }),
+            new TableCell({ children: [new Paragraph(analysisDateTime || 'Não informado')], verticalAlign: VerticalAlign.CENTER }),
           ],
         }),
       ],
       width: { size: 100, type: WidthType.PERCENTAGE },
-      columnWidths: [5000, 5000],
+      columnWidths: [6500, 3500],
       borders: {
         top: { style: BorderStyle.SINGLE, size: 1, color: "000000" },
         bottom: { style: BorderStyle.SINGLE, size: 1, color: "000000" },
