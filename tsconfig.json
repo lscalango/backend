@@ -1,26 +1,29 @@
 {
   "compilerOptions": {
-    "target": "ES2020",                       /* Define a versão do ECMAScript de destino. 'ES2020' suporta a maioria das features modernas. */
-    "module": "NodeNext",                     /* Especifica o sistema de módulos. 'NodeNext' é bom para Node.js moderno. */
-    "moduleResolution": "NodeNext",           /* Como o TypeScript resolve os módulos. DEVE ser 'NodeNext' se 'module' for 'NodeNext'. */
-    "baseUrl": "./",                          /* Diretório base para resolver caminhos de módulos não relativos. */
-    "outDir": "./dist",                       /* Diretório de saída para os arquivos JavaScript compilados. */
-    "esModuleInterop": true,                  /* Permite interoperabilidade com módulos CommonJS. Essencial para muitas bibliotecas. */
+    "target": "ES2020", /* Define a versão do ECMAScript de destino. 'ES2020' suporta a maioria das features modernas. */
+    "module": "NodeNext", /* Especifica o sistema de módulos. 'NodeNext' é bom para Node.js moderno. */
+    "moduleResolution": "NodeNext", /* Como o TypeScript resolve os módulos. DEVE ser 'NodeNext' se 'module' for 'NodeNext'. */
+    "baseUrl": "./", /* Diretório base para resolver caminhos de módulos não relativos. */
+    "outDir": "./dist", /* Diretório de saída para os arquivos JavaScript compilados. */
+    "esModuleInterop": true, /* Permite interoperabilidade com módulos CommonJS. Essencial para muitas bibliotecas. */
     "forceConsistentCasingInFileNames": true, /* Garante que os nomes dos arquivos sejam consistentes em termos de maiúsculas/minúsculas. */
-    "strict": true,                           /* Habilita todas as verificações de tipo estritas. Recomendado para novos projetos. */
-    "skipLibCheck": true,                     /* Pula a verificação de tipos de arquivos de declaração (.d.ts). Pode acelerar a compilação. */
-    "resolveJsonModule": true,                /* Permite importar arquivos .json como módulos. */
-    "sourceMap": true,                        /* Gera arquivos .map para debugging. */
+    "strict": true, /* Habilita todas as verificações de tipo estritas. Recomendado para novos projetos. */
+    "skipLibCheck": true, /* Pula a verificação de tipos de arquivos de declaração (.d.ts). Pode acelerar a compilação. */
+    "resolveJsonModule": true, /* Permite importar arquivos .json como módulos. */
+    "sourceMap": true, /* Gera arquivos .map para debugging. */
     // "noImplicitAny": true,                 /* Levanta erro em expressões e declarações com um tipo 'any' implícito. (Parte do 'strict') */
     // "strictNullChecks": true,              /* Em modo estrito, null e undefined não são atribuíveis a todos os tipos. (Parte do 'strict') */
     // "allowSyntheticDefaultImports": true,  /* Permite importações padrão de módulos sem um export padrão. (Coberto por esModuleInterop) */
-    "experimentalDecorators": true,        /* Habilita decoradores experimentais (se você usar bibliotecas como TypeORM, NestJS, etc.) */
-    "emitDecoratorMetadata": true          /* Emite metadados de design para decoradores (usado com experimentalDecorators) */
+    "experimentalDecorators": true, /* Habilita decoradores experimentais (se você usar bibliotecas como TypeORM, NestJS, etc.) */
+    "emitDecoratorMetadata": true /* Emite metadados de design para decoradores (usado com experimentalDecorators) */
   },
   "include": [
     "src/**/*.ts", // Se seu código estiver em uma pasta 'src'
-    "server.ts",   // Inclui o arquivo server.ts se estiver na raiz
-    "reportGenerator.ts" // Inclui o reportGenerator.ts se estiver na raiz
+    "server.ts", // Inclui o arquivo server.ts se estiver na raiz
+    "src/services/reportGenerator.ts" // Inclui o reportGenerator.ts se estiver na raiz
   ],
-  "exclude": ["node_modules", "dist"]
+  "exclude": [
+    "node_modules",
+    "dist"
+  ]
 }
